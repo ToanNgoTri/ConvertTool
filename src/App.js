@@ -203,7 +203,7 @@ function App() {
       let url2 = "https://google.com.vn";
       let res = await fetch(url2, {mode:'no-cors'}); // {mode:'no-cors'}
       let text = await res.json();
-      document.querySelector(".input").value = text;
+      console.log("Fetch Data");
     }
     catch (error)
     {
