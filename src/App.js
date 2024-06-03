@@ -6,10 +6,15 @@ import { app } from "./Firebase";
 // https://firebase.google.com/docs/web/setup#available-libraries
 // import { getDatabase, ref, onValue  } from "firebase/database";
 
+// bỏ phần thứ nhất, thứ hai đi
 function App() {
   function covert() {
     let input = document.querySelector(".input").value;
-    let i1 = input.replace(/^(\s)*(.*)/gm, "$2");
+
+    let i0 = input.replace(/^Điều (\d+)\./gm, "Điều $1:")
+    // điều . thành điều:
+
+    let i1 = i0.replace(/^(\s)*(.*)/gm, "$2");
     // đề phòng có khoảng trống đầu hàng, cut it
 
     let i2 = i1.replace(/^\n/gm, "");
@@ -26,16 +31,27 @@ function App() {
     let i4 = i3.replace(/^mục(.*)\n/gim, "");
     // bỏ mục đi
 
-    document.querySelector(".output").value = i4;
+    let i5;
+    if (!i4.match(/^Phần thứ.*:.(\w)/gm)) {
+      i5 = i4.replace(/^Phần thứ (.*)\n(.*)/gm, "Phần thứ $1: $2");
+      // kết nối "chương với nội dung "phần thứ ...", trường hợp bị tách 2 hàng
+    } else {
+      i5 = i4;
+    }
+
+    let i6 = i5.replace(/^phần thứ(.*)\n/gim, "");
+    // bỏ phần thức nhất, thứ hai
+
+    document.querySelector(".output").value = i6;
 
     // const db = getDatabase();
     // const dbRef = ref(db);
 
-    // // set(ref(db,`Law1/chương 2: cụ thể`), {
-    // //   'Điều 1:  mua bán trái phép':{
-    // //     'khoản 1': 'dưới 1 gram'
-    // //   },
-    // // });
+    // set(ref(db,`Law1/chương 2: cụ thể`), {
+    //   'Điều 1:  mua bán trái phép':[
+    //     'khoản 1 dưới 1 gram','khoản 2 trên 1g'
+    //   ],
+    // });
 
     // get(child(dbRef, `Law1`)).then((snapshot) => {
     //   if (snapshot.exists()) {
@@ -53,65 +69,115 @@ function App() {
     // });
 
     let chapterArray;
-    if (i4.match(/^Chương.*$/gm)) {
-      chapterArray = i4.match(/^Chương.*$/gm);
+    if (i6.match(/^Chương.*$/gm)) {
+      chapterArray = i6.match(/^Chương.*$/gm);
       // console.log(chapterArray);
     } else {
       chapterArray = null;
     }
-    let allArticleArray = [];
-    let articleArray;
-
+    let articleArray ;  // lấy khoảng giữa các khoảng
+    // let data = {}
+    // let data = []
+    let data = i6.match(/^Chương.*$/gm);
+    let allArticle = [];  // lấy riêng lẻ các điều
+    let point = []
+    let d=-1
     for (var a = 0; a < chapterArray.length; a++) {
-      let articleArray = [];
-      let everyArticle = [];
+      // data[chapterArray[a]] = {};
+      articleArray = [];
+      // let everyArticle = [];
       if (a < chapterArray.length - 1) {
-        let replace = `((?<=${chapterArray[a]}))((\n.*)*)\n((?=${
-          chapterArray[a + 1]
-        }))`;
+        let replace = `(?<=${chapterArray[a]}\n)(.*\n)*(?=${chapterArray[a + 1]})`;
         let re = new RegExp(replace, "gm");
-        articleArray = i4.match(re);
-        allArticleArray.push(articleArray[0]);
+        articleArray = i6.match(re);
       } else {
         let replace = `((?<=${chapterArray[a]}))((\n.*)*)$`;
         let re = new RegExp(replace, "gm");
-        articleArray = i4.match(re);
-        allArticleArray.push(articleArray[0]);
+        articleArray = i6.match(re);
       }
-      // articleArray[0].match(/^Điều(.*)\n(\D.*)$/gm
-      if (articleArray[0].match(/\nĐiều(.*)$/gm)) {
-        let c = `\nĐiều(.*)\n(\D.*)$`;
-        let d = new RegExp(c, "gm");
-        everyArticle.push(articleArray[0].match(d));
 
+      // articleArray[0].match(/^Điều(.*)\n(\D.*)$/gm
+      if (articleArray[0].match(/^Điều \d+(.*)$/gm)) {
+        // everyArticle.push(articleArray[0].match(/^Điều(.*)(\n\D.*)*(?=\n\d.*)/gm));
+        // ^Điều(.*)(\n\D.*)*(?=\n\d.*)
+        // console.log(articleArray[0].match(/\nĐiều(.*)$/gm));
         // console.log(chapterArray);
-      } else {
+
+
+        // everyArticle.push(articleArray[0].match(/^Điều \d+(.*)$/gm));
+
+        // data[chapterArray[a]] = articleArray[0].match(/^Điều \d+(.*)$/gm)
+        data[a] = {[chapterArray[a]]:articleArray[0].match(/^Điều \d+(.*)$/gm)}
+        allArticle.push(articleArray[0].match(/^Điều \d+(.*)$/gm));
+      } 
+      else{
         // everyArticle = null
       }
 
-      // if (temMatch.match(/^Điều.*$/gm) ){
-      //   chapterArray = i4.match(/^Điều.*$/gm);
-      //   // console.log(chapterArray);
-      // }else{
-      //   chapterArray = 0
-      // }
+      let countArticle = allArticle[a].length;
+      // console.log(data[chapterArray[a]]);
+      let b1;
+      for(let b=0;b<countArticle;b++){
+        b1=b
+        // let replace = `(?<=${allArticle[a][b]}\n)(.*\n)*(?=${allArticle[a][b+1]})`;
+        // let re = new RegExp(replace, "gm");
+        // point.push(articleArray[0].match(re));
+          if( b < countArticle-1 ){
+            let replace = `(?<=${allArticle[a][b]}\n)(.*\n)*(?=${allArticle[a][b+1]})`;
+            let re = new RegExp(replace, "gm");
+            point.push(articleArray[0].match(re));
+            // sửa lại
+          }else{
+            let replace = `(?<=${allArticle[a][b]}\n)((.*\n.*)*).*`;
+            let re = new RegExp(replace, "gm");
+            point.push(articleArray[0].match(re));
+          }
+            // console.log(data[a][c]);
+            
+          }
 
-      console.log("all Article", everyArticle);
+          for(let b=0;b<countArticle;b++){
 
-      // console.log(a);
-      // articleArray = i4.match(/^Điều.*/gm);
+            
+            for(let c = 0 ; c < 1;c++){
+              d++;
+              
+              // data[chapterArray[a]][b] = {[data[chapterArray[a]][b]]:point[d][0]}
+              data[a][chapterArray[a]][b] = {[data[a][chapterArray[a]][b]]:point[d][0]}
+              // console.log(data[chapterArray[a]][b]);
+              
+            }
+            
+            // data[chapterArray[a]][allArticle[a][b]] = point[d][0];
 
-      // for(let b=0;b<=a;b++){
-      //   console.log(articleArray.length);
-      // }
+
+            // console.log('allArticle[a][b]',allArticle[a][b]);
+        }
+      // console.log(countArticle);
+      // console.log("articleArray", articleArray);
+
     }
-    // let i4 = i3.match(re)
-    console.log("all chapter", chapterArray);
+    // console.log('point',point);
+    // let m = data['Chương I: NHỮNG QUY ĐỊNH CHUNG'][0]
+    // data['Chương I: NHỮNG QUY ĐỊNH CHUNG'][0] = {[m]:[]}
+    // console.log('point',point);
+    console.log('data',data);
+    // console.log('allArticle',allArticle);
+
+    const db = getDatabase();
+    const dbRef = ref(db);
+
+    set(ref(db,`Law1/Luật Cạnh Tranh 2018`), 
+    data
+    );
+
+
+    // console.log("allArticle", allArticle);
 
     // let replace = `${chapterArray[0]}((\n.*\n.*)*)\n${chapterArray[1]}`;
     // let re = new RegExp(replace,"gm");
     // let i5 = i4.match(re);
-
+    
     // let replace1 = `${chapterArray[0]}`;
     // let re1 = new RegExp(replace1,"gm");
     // let i6 = i5[0].replace(re1,'');
@@ -195,22 +261,6 @@ function App() {
     alert("copied");
   }
 
-  async function fetchData()
-  {
-    try
-    {
-      let url = "https://thuvienphapluat.vn/van-ban/Lao-dong-Tien-luong/Thong-bao-1570-TB-BLDTBXH-2024-de-xuat-hoan-doi-ngay-lam-viec-dip-nghi-le-ngay-30-4-606184.aspx";
-      let url2 = "https://google.com.vn";
-      let res = await fetch(url2, {mode:'no-cors'}); // {mode:'no-cors'}
-      let text = await res.json();
-      console.log("Fetch Data");
-    }
-    catch (error)
-    {
-      console.log(error);
-    }
-  }
-
   return (
     <div className="App">
       <textarea className="input" cols="90" rows="45"></textarea>
@@ -219,9 +269,6 @@ function App() {
           Covert
         </div>
         <div className="btb copy_btb" onClick={() => copy()}>
-          Copy
-        </div>
-        <div className="btb fetch_data" onClick={() => fetchData()}>
           Copy
         </div>
       </div>
