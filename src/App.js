@@ -12,6 +12,7 @@ import { app } from "./Firebase";
 
   // chưa đưa tên nghị định thông tư và những "điều ..." có division SLASH (/) vô được 
   // (đưa được rồi nhưng thay bằng _ )
+  // đôi khi khoảng cách các điều không đều
 
   
 function App() {      
@@ -21,7 +22,9 @@ function App() {
     let i0 = input.replace(/^Điều (\d+\w?)\.(.*)/igm, "Điều $1:$2")
     // điều . thành điều:
 
-    let i1 = i0.replace(/^Điều (.*)\./gim, "Điều $1")
+    let i0a =  i0.replace(/^Điều (\d+\w?)\.(.*)/igm, "Điều $1:$2")
+
+    let i1 = i0a.replace(/^Điều (.*)\./gim, "Điều $1")
     // Bỏ . ở cuối hàng trong Điều
 
     let i2 = i1.replace(/^(\s)*(.*)/gm, "$2");
@@ -30,27 +33,47 @@ function App() {
     let i3 = i2.replace(/^\n/gm, "");
     // bỏ khoảng trống giữa các row
 
-    let i4;
-    if (!i3.match(/^Mục.*(:|\.).*\w*$/gmi)) {
-      i4 = i3.replace(/^Mục (.*)\n(.*)/gim, "Mục $1: $2");
-      // kết nối "mục với nội dung "mục", trường hợp bị tách 2 hàng
-    } else {
-      i4 = i3;
-    }
+    // let i4;
+    // if (!i3.match(/^Mục.*(:|\.).*\w*$/gmi)) {
+    //   i4 = i3.replace(/^Mục (.*)\n(.*)/gim, "Mục $1: $2");
+    //   // kết nối "mục với nội dung "mục", trường hợp bị tách 2 hàng
+    // } else {
+    //   i4 = i3;
+    // }
 
-    let i5 = i4.replace(/^mục(.*)\n/gim, "");
+
+    let i4;
+      // i6 = i5.replace(/^Chương (.*)\n(.*)/gim, "Chương $1: $2");
+
+      let i4a = []
+      let initial = 4 // số dòng tối đa mặc định có thể bị xuống dòng làm cho phần 'chương' không được gộp 
+                      // thành 1 dòng (có thể thay đổi để phù hợp tình hình)
+
+      for(let b = 0;b<initial; b++ ){
+
+        if (!b) {
+          i4a[b] = i3.replace(/(?<=^Mục .*)\n(?!Điều \d.*)/gim, ": ");
+        } else {
+          i4a[b] = i4a[b-1].replace(/(?<=^Mục .*)\n(?!Điều \d.*)/gim, " ");
+
+          // kết nối "mục với nội dung "mục", trường hợp bị tách 2 hàng
+        }
+          }
+
+      i4= i4a[initial-1]
+
+
+
+    let i5 = i4.replace(/^(Mục|Mục)(.*)\n/gim, "");
     // bỏ mục đi
 
     let i6 = i5.replace(/(\[|\()\d*(\]|\))/gim, "");
     // bỏ chỉ mục số đi
 
-
     let i7;
       // i6 = i5.replace(/^Chương (.*)\n(.*)/gim, "Chương $1: $2");
 
       let i7a = []
-      let initial = 4 // số dòng tối đa mặc định có thể bị xuống dòng làm cho phần 'chương' không được gộp 
-                      // thành 1 dòng (có thể thay đổi để phù hợp tình hình)
 
       for(let b = 0;b<initial; b++ ){
         if(!b){
@@ -85,12 +108,11 @@ function App() {
       i9= i9a[initial-1]
       // i8 = i7.replace(/(?<=^Phần thứ.*)\n(?!điều.*)/gmi, ": ");
 
+      let i10 =i9.replace(/\//gim, "\\")
+      // loại dấu division spla sh bằng dấu _
 
-      // let i10 = i9.replace(/\((.*)\)/gmi, "\($1\)");
+      // let i10 =i9b.replace(/\n$/, ".")
 
-      // let i10 =i9.replace(/\//gim, "_")
-      // loại dấu division spalsh bằng dấu _
-      let i10 =i9
     document.querySelector(".output").value = i10;
 
 
@@ -120,11 +142,11 @@ if(!i10.match(/^phần thứ.*/gmi)){                                           
         let re = new RegExp(replace, "gim");
         articleArray = i10.match(re);
       }
-
-      if (articleArray[0].match(/^Điều \d+(.*)$/gim)) {
+// console.log(articleArray[0]);
+      if (articleArray[0].match(/^(Điều|Điều) \d+(.*)$/gim)) {
 
         data[a] = {[chapterArray[a]]:[]}
-        allArticle.push(articleArray[0].match(/^Điều \d+(.*)$/gim));
+        allArticle.push(articleArray[0].match(/^(Điều|Điều) \d+(.*)$/gim));
       } 
       else{
         // everyArticle = null
@@ -137,64 +159,73 @@ if(!i10.match(/^phần thứ.*/gmi)){                                           
 
         // lỡ mà trong 'Điều ...' có dấu ngoặc ),( thì phải thêm \),\(
         // nếu không vì khi lấy nội dung của khoản sẽ bị lỗi 
-        if(allArticle[a][b].match(/\(/gim) && !allArticle[a][b].match(/\\\(/gim) ){      
-          allArticle[a][b] = allArticle[a][b].replace( /\(/, '\(' );
-          allArticle[a][b] = allArticle[a][b].replace( /\)/, '\)' );
-
-
-          
+        let TemRexgexArticleA =allArticle[a][b]
+        
+        if(allArticle[a][b].match(/\(/gim) ){      
+          TemRexgexArticleA = allArticle[a][b].replace( /\(/, '\\(' );
+          TemRexgexArticleA = TemRexgexArticleA.replace( /\)/, '\\)' );
         }
 
         
         
         
         if( b < countArticle-1 ){
-          
+
+          let TemRexgexArticleB = allArticle[a][b+1]
+
           if(allArticle[a][b+1].match(/\(/gim)){      
-            allArticle[a][b+1] = allArticle[a][b+1].replace( /\(/, '\(' );
-            allArticle[a][b+1] = allArticle[a][b+1].replace( /\)/, '\)' );            
+            TemRexgexArticleB = allArticle[a][b+1].replace( /\(/, '\\(' );
+            TemRexgexArticleB = TemRexgexArticleB.replace( /\)/, '\\)' );            
           }
 
-            let replace = `(?<=${allArticle[a][b]}\n)(.*\n)*(?=${allArticle[a][b+1]})`;
+            let replace = `(?<=${TemRexgexArticleA}\n)(.*\n)*(?=${TemRexgexArticleB})`;
             let re = new RegExp(replace, "gim");
-            if(articleArray[0].match(re)){
-              point.push(articleArray[0].match(re));
 
+            if(articleArray[0].match(re)){
+              // console.log(articleArray[0].match(re)[0]).replace(/\n$/, "");
+
+              let e = articleArray[0].match(re)[0]
+                e =  articleArray[0].match(re)[0].replace(/\n$/, "")
+                e =  e.replace(/^\n/, "")
+  
+              point.push(e);
             }else{
               point.push(['']);
-// console.log(articleArray[0]);
-// console.log('1',allArticle[a][b]);
-// console.log('2',allArticle[a][b+1]);
-}
-            // sửa lại
+            }
+
           }else{
-            let replace = `(?<=${allArticle[a][b]}\n)((.*\n.*)*).*`;
+            let TemRexgexArticleB = allArticle[a][b]
+
+            if(allArticle[a][b].match(/\(/gim)){      
+              TemRexgexArticleB = allArticle[a][b].replace( /\(/, '\\(' );
+              TemRexgexArticleB = TemRexgexArticleB.replace( /\)/, '\\)' );            
+            }
+  
+            let replace = `(?<=${TemRexgexArticleB}\n)((.*\n.*)*).*`;
             let re = new RegExp(replace, "im");
+
             if(articleArray[0].match(re)){
-              point.push(articleArray[0].match(re));
+            let e = articleArray[0].match(re)[0]
+              e =  articleArray[0].match(re)[0].replace(/\n$/, "")
+              e =  e.replace(/^\n/, "")
+
+              point.push(e);
 
             }else{
               point.push(['']);
-              // console.log(articleArray[0]);
-
-              // console.log('sai',allArticle[a][b]);
             }
             
 
           }
-          // }
-          // for(let b=0;b<countArticle;b++){ ////////////////////////////////////////////// dư nè?
-
             
             for(let c = 0 ; c < 1;c++){
               d++;
               
-              data[a][chapterArray[a]][b] = {[allArticle[a][b]]:point[d][0]}
-              // console.log(point[d][0]);
+              data[a][chapterArray[a]][b] = {[allArticle[a][b]]:point[d]}
+
               
             }
         }
-      // }
     }
 
   }else{//////////////////////////////////////////////////////////////////////////////////////////////  // nếu có phần thứ ...
@@ -204,7 +235,8 @@ if(!i10.match(/^phần thứ.*/gmi)){                                           
     
     if (i10.match(/^phần thứ.*$/gmi)) {
       sectionArray = i10.match(/^phần thứ.*$/gmi);
-      // console.log(chapterArray);
+
+      // console.log(sectionArray);
     } else {
       sectionArray = null;
     }
@@ -213,8 +245,8 @@ if(!i10.match(/^phần thứ.*/gmi)){                                           
     
     let ContentInEachSection ;  // lấy khoảng giữa các phần
     data = []
-    
     let point = []
+
     for (var a = 0; a < sectionArray.length; a++) {
       ContentInEachSection = [];
       if (a < sectionArray.length - 1) {
@@ -233,11 +265,11 @@ if(!i10.match(/^phần thứ.*/gmi)){                                           
       // console.log(ContentInEachSection[0].match(/^Chương.*$/igm));
       // console.log('ContentInEachSection',ContentInEachSection[0]);
 
-    // if(0){   // nếu mà trong 'phần thứ...' có chương
       if(ContentInEachSection[0].match(/^Chương.*$/igm)){   // nếu mà trong 'phần thứ...' có chương
       
 
       chapterArray = ContentInEachSection[0].match(/^Chương.*$/igm);
+      // console.log(chapterArray);
       // data[a] = {[sectionArray[a]]:chapterArray}
       data[a] =[]
       data[a][sectionArray[a]] = []
@@ -253,9 +285,7 @@ if(!i10.match(/^phần thứ.*/gmi)){                                           
         let re = new RegExp(replace, "gim");
         ContentInEachChapter = ContentInEachSection[0].match(re);
       }
-
-      articleArray = ContentInEachChapter[0].match(/^Điều \d+(.*)$/gim)
-
+      articleArray = ContentInEachChapter[0].match(/^(Điều|Điều) \d+(.*)$/gim)
       data[a][sectionArray[a]][b] = []
       data[a][sectionArray[a]][b][chapterArray[b]] = []
 
@@ -264,37 +294,53 @@ if(!i10.match(/^phần thứ.*/gmi)){                                           
 
         // lỡ mà trong 'Điều ...' có dấu ngoặc ),( thì phải thêm \),\(
         // nếu không vì khi lấy nội dung của khoản sẽ bị lỗi 
-        if(articleArray[c].match(/\(/gim)  && !articleArray[c].match(/\\\(/gim)){      
-          articleArray[c] = articleArray[c].replace( /\(/, '\(' );
-          articleArray[c] = articleArray[c].replace( /\)/, '\)' );
-
-          // articleArray[c] = articleArray[c].replace( /\//, '\\/' );
-          // articleArray[c] = articleArray[c].replace( /\//, '\\/' );
-
+        let TemRexgexArticleA =articleArray[c]
+        if(articleArray[c].match(/\(/gim) ){      
+          TemRexgexArticleA = articleArray[c].replace( /\(/, '\\(' );
+          TemRexgexArticleA = TemRexgexArticleA.replace( /\)/, '\\)' );
+          
         }
 
         if (c < articleArray.length - 1) {                            
 
+          let TemRexgexArticleB =articleArray[c + 1]
+
+
           if(articleArray[c + 1].match(/\(/gim) ){      // mới thêm sau này xem có chạy được không
-            articleArray[c + 1] = articleArray[c + 1].replace( /\(/, '\(' );
-            articleArray[c + 1] = articleArray[c + 1].replace( /\)/, '\)' ); 
+            TemRexgexArticleB = articleArray[c + 1].replace( /\(/, '\\(' );
+            TemRexgexArticleB = TemRexgexArticleB.replace( /\)/, '\\)' ); 
           }
   
-  
-
-
-          let replace = `(?<=${articleArray[c]}\n)(.*\n)*(?=${articleArray[c + 1]})`;
+          let replace = `(?<=${TemRexgexArticleA}\n)(.*\n)*(?=${TemRexgexArticleB})`;
           let re = new RegExp(replace, "gim");
           point = ContentInEachChapter[0].match(re);
         } else {
-          let replace = `((?<=${articleArray[c]}))((\n.*)*)$`;
+
+          let TemRexgexArticleB =articleArray[c]
+
+
+          if(articleArray[c].match(/\(/gim) ){      // mới thêm sau này xem có chạy được không
+            TemRexgexArticleB = articleArray[c].replace( /\(/, '\\(' );
+            TemRexgexArticleB = TemRexgexArticleB.replace( /\)/, '\\)' ); 
+          }
+  
+
+          let replace = `((?<=${TemRexgexArticleB}))((\n.*)*)$`;
           let re = new RegExp(replace, "gim");
           point = ContentInEachChapter[0].match(re);
         }
-        if(!point){
-          point=['']
+        let e
+        if(point){
+          e =  point[0].replace(/\n$/, "")
+          e =  e.replace(/^\n/, "")
+
+        }else{
+            e = ''
+
           }
-        data[a][sectionArray[a]][b][chapterArray[b]].push({[articleArray[c]]:point[0]})
+
+          
+        data[a][sectionArray[a]][b][chapterArray[b]].push({[articleArray[c]]:e})
 
         
       }
@@ -311,7 +357,7 @@ if(!i10.match(/^phần thứ.*/gmi)){                                           
 
     }else{                                                // nếu mà trong 'phần thứ...' không có chương
 
-      articleArray = ContentInEachSection[0].match(/^Điều \d+(.*)$/gim);
+      articleArray = ContentInEachSection[0].match(/^(Điều|Điều) \d+(.*)$/gim);
     
 
       // data[a] = {[sectionArray[a]]:articleArray}
@@ -322,37 +368,56 @@ if(!i10.match(/^phần thứ.*/gmi)){                                           
 
         // lỡ mà trong 'Điều ...' có dấu ngoặc ),( thì phải thêm \),\(
         // nếu không vì khi lấy nội dung của khoản sẽ bị lỗi 
-        if(articleArray[b].match(/\(/gim) && !articleArray[b + 1].match(/\\\(/gim)){      
-          articleArray[b] = articleArray[b].replace( /\(/, '\(' );
-          articleArray[b] = articleArray[b].replace( /\)/, '\)' );
-        }
 
+        let TemRexgexArticleA = articleArray[b]
+        if(articleArray[b].match(/\(/gim)){      
+          TemRexgexArticleA = articleArray[b].replace( /\(/, '\\(' );
+          TemRexgexArticleA = TemRexgexArticleA.replace( /\)/, '\\)' );
+        }
 
         if( b < articleArray.length-1 ){
 
+          let TemRexgexArticleB = articleArray[b+1]
+          if(articleArray[b+1].match(/\(/gim)){      
+            TemRexgexArticleB = articleArray[b+1].replace( /\(/, '\\(' );
+            TemRexgexArticleB = TemRexgexArticleB.replace( /\)/, '\\)' );
+          }  
 
-          if(articleArray[b + 1].match(/\(/gim) ){      // mới thêm sau này xem có chạy được không
-            articleArray[b + 1] = articleArray[b + 1].replace( /\(/, '\(' );
-            articleArray[b + 1] = articleArray[b + 1].replace( /\)/, '\)' ); 
-          }
-  
-
-            let replace = `(?<=${articleArray[b]}\n)(.*\n)*(?=${articleArray[b+1]})`;
+            let replace = `(?<=${TemRexgexArticleA}\n)(.*\n)*(?=${TemRexgexArticleB})`;
             let re = new RegExp(replace, "gim");
             point = (ContentInEachSection[0].match(re));
+
+
           }else{
-            let replace = `(?<=${articleArray[b]}\n)((.*\n.*)*).*`;
+
+            let TemRexgexArticleB = articleArray[b]
+            if(articleArray[b].match(/\(/gim)){      
+              TemRexgexArticleB = articleArray[b].replace( /\(/, '\\(' );
+              TemRexgexArticleB = TemRexgexArticleB.replace( /\)/, '\\)' );
+            }  
+
+            
+            let replace = `(?<=${TemRexgexArticleB}\n)((.*\n.*)*).*`;
             let re = new RegExp(replace, "igm");
             point = ContentInEachSection[0].match(re);
+
+
           }
             
-          if(!point){
-          point=['']
+          let e
+
+          if(point){
+            e =  point[0].replace(/\n$/, "")
+            e =  e.replace(/^\n/, "")
+  
+          }else{
+            e =''
+
           }
 
           data[a][sectionArray[a]][b] =[]
-          // data[a][sectionArray[a]][b].push({[articleArray[b]]: point[0]})
-          data[a][sectionArray[a]][b] = {[articleArray[b]]: point[0]}
+
+          data[a][sectionArray[a]][b] = {[articleArray[b]]: e}
 
     }
   
@@ -374,7 +439,10 @@ if(!i10.match(/^phần thứ.*/gmi)){                                           
     const db = getDatabase();
     const dbRef = ref(db);
 
-    set(ref(db,`Law1/Luật Lực lượng tham gia bảo vệ an ninh trật tự ở cơ sở năm 2023`), 
+    // set(ref(db,`Law1/Nghị định số 137\\2020\\NĐ-CP`), 
+    // set(ref(db,`Law1/Thông tư số 32\\2023\\TT-BCA`), 
+
+    set(ref(db,`Law1/Luật Cư trú năm 2020`), 
     data
     );
 
